@@ -2,7 +2,6 @@ package chapter6
 
 import scala.annotation.tailrec
 
-
 object Chapter6 {
   type Rand[+A] = RNG => (A, RNG)
 
@@ -11,7 +10,7 @@ object Chapter6 {
 
   case class SimpleRng(seed: Long) extends RNG {
     override def nextInt: (Int, RNG) =
-      val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
+      val newSeed = (seed * 0x5deece66dL + 0xbL) & 0xffffffffffffL
       val nextRng = SimpleRng(newSeed)
       val n = (newSeed >>> 16).toInt
       (n, nextRng)
@@ -55,7 +54,8 @@ object Chapter6 {
   def ints(count: Int)(rng: RNG): (List[Int], RNG) =
     @tailrec
     def run(count: Int)(rng: RNG)(accum: List[Int]): (List[Int], RNG) =
-      if count == 0 then (accum, rng) else
+      if count == 0 then (accum, rng)
+      else
         val (n, rng2) = rng.nextInt
         run(count - 1)(rng2)(accum ++ List(n))
 
@@ -63,51 +63,55 @@ object Chapter6 {
 
   def unit[A](a: A): Rand[A] = rng => (a, rng)
 
-    /*
-    * map takes a state action (which is Rand) and a function that does something to the generated state action
-    * the equivalent impure code would be:
-    * def map(s: RNGObject, f: A => B): B =
-    *   val a = s.nextInt
-    *   f(a)
-    *
-    * this is the equivalent of the state transition + function application seen in map as is
-    */
+  /*
+   * map takes a state action (which is Rand) and a function that does something to the generated state action
+   * the equivalent impure code would be:
+   * def map(s: RNGObject, f: A => B): B =
+   *   val a = s.nextInt
+   *   f(a)
+   *
+   * this is the equivalent of the state transition + function application seen in map as is
+   */
   def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng =>
       val (a, rng2) = s(rng)
       (f(a), rng2)
 
   /*
-  * Implementation of map in terms of flatmap.
-  * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
-  * The processing must follow the following:
-  * 1. apply state action first
-  * 2. apply function
-  * 3. return result of function wrapped by unit. Remember unit = a => rng => (a, rng)
-  *   - NOTE: THIS IS WHERE WE THREAD THE NEXT RNG
-  * */
+   * Implementation of map in terms of flatmap.
+   * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
+   * The processing must follow the following:
+   * 1. apply state action first
+   * 2. apply function
+   * 3. return result of function wrapped by unit. Remember unit = a => rng => (a, rng)
+   *   - NOTE: THIS IS WHERE WE THREAD THE NEXT RNG
+   * */
   def mapF[A, B](s: Rand[A])(f: A => B): Rand[B] =
     flatMap(s)(a => unit(f(a)))
 
   /*
-  * Implementation of flatmap.
-  * The key to remember here is that flatmap is supposed to return a state action, i.e. Rand[B]
-  * The equivalent nonthreaded state is the following:
-  * def foo:
-  *   val rng = SimpleRng(42)
-  *   val (r1, rng2) = rng.nextInt
-  *   val (r2, rng3) = rng2.nextInt
-  *   (r1 + r2, rng3)
-  *
-  * The processing must follow the following:
-  * 1. apply state action first
-  * 2. apply function where we get back Rand[B] = RNG => (B, RNG), in other words a new state action
-  * 3. thread the new state rng into the above state action to get back (B, RNG), which results in RNG -> (B, RNG) = Rand[B]
-  * */
+   * Implementation of flatmap.
+   * The key to remember here is that flatmap is supposed to return a state action, i.e. Rand[B]
+   * The equivalent nonthreaded state is the following:
+   * def foo:
+   *   val rng = SimpleRng(42)
+   *   val (r1, rng2) = rng.nextInt
+   *   val (r2, rng3) = rng2.nextInt
+   *   (r1 + r2, rng3)
+   *
+   * The processing must follow the following:
+   * 1. apply state action first
+   * 2. apply function where we get back Rand[B] = RNG => (B, RNG), in other words a new state action
+   * 3. thread the new state rng into the above state action to get back (B, RNG), which results in RNG -> (B, RNG) = Rand[B]
+   * */
   def flatMap[A, B](s: Rand[A])(f: A => Rand[B]): Rand[B] =
     rng =>
-      val (a, rng2) = s(rng) // state operation to get the current state that we need to apply f to. this is just like map
-      f(a)(rng2) // passing rng2 at the end here is what actually applies the state action
+      val (a, rng2) = s(
+        rng
+      ) // state operation to get the current state that we need to apply f to. this is just like map
+      f(a)(
+        rng2
+      ) // passing rng2 at the end here is what actually applies the state action
 
   val nonNegativeEven: Rand[Int] = map(nonNegativeInt)(i => i - (i % 2))
 
@@ -124,11 +128,12 @@ object Chapter6 {
     map2(ra)(rb)((_, _)) // same as map2(ra)(rb)((a, b) => (a, b))
 
   def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
-    rng => rs.foldRight((List.empty, rng)){(action, accum) =>
-      val (a, s) = accum
-      val (a2, s2) = action(s)
-      (a2 :: a, s2)
-    }
+    rng =>
+      rs.foldRight((List.empty, rng)) { (action, accum) =>
+        val (a, s) = accum
+        val (a2, s2) = action(s)
+        (a2 :: a, s2)
+      }
 
   def sequence2[A](rs: List[Rand[A]]): Rand[List[A]] =
     rs.foldRight(unit(List.empty)) { (action, accum) =>
@@ -136,11 +141,12 @@ object Chapter6 {
     }
 
   def sequence3[A](rs: List[Rand[A]]): Rand[List[A]] =
-    rng => rs.foldRight((List.empty, rng))((action, accum) => {
-      val (result, rng2) = accum
-      val (a, rng3) = action(rng2)
-      (a :: result, rng3)
-    })
+    rng =>
+      rs.foldRight((List.empty, rng))((action, accum) => {
+        val (result, rng2) = accum
+        val (a, rng3) = action(rng2)
+        (a :: result, rng3)
+      })
 
   def sequence4[A](rs: List[Rand[A]]): Rand[List[A]] =
     rs.foldRight(unit(List.empty))((action, accum) => {
