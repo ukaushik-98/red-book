@@ -92,4 +92,16 @@ object Chapter6 {
 
   def both[A, B](ra: Rand[A])(rb: Rand[B]): Rand[(A, B)] =
     map2(ra)(rb)((_, _)) // same as map2(ra)(rb)((a, b) => (a, b))
+
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rng => rs.foldRight((List.empty, rng)){(action, accum) =>
+      val (a, s) = accum
+      val (a2, s2) = action(s)
+      (a2 :: a, s2)
+    }
+
+  def sequence2[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit(List.empty)) { (action, accum) =>
+      map2(action)(accum)(_ :: _)
+    }
 }
