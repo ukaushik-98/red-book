@@ -80,15 +80,30 @@ object Chapter6 {
   /*
   * Implementation of map in terms of flatmap.
   * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
-  * The processig must follow the following:
+  * The processing must follow the following:
   * 1. apply state action first
   * 2. apply function
-  * 3. return result of function and the new state.
+  * 3. return result of function wrapped by unit. Remember unit = a => rng => (a, rng)
   *   - NOTE: THIS IS WHERE WE THREAD THE NEXT RNG
   * */
   def mapF[A, B](s: Rand[A])(f: A => B): Rand[B] =
     flatMap(s)(a => unit(f(a)))
 
+  /*
+  * Implementation of flatmap.
+  * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
+  * The equivalent nonthreaded state is the following:
+  * def foo: Int
+  *   val rng = SimpleRng(42)
+  *   val (r1, rng2) = rng.nextInt
+  *   val (r2, rng3) = rng2.nextInt
+  *   r1 + r2
+  *
+  * The processing must follow the following:
+  * 1. apply state action first
+  * 2. apply function where we get back Rand[B] = RNG => (B, RNG), in other words a new state action
+  * 3. thread the new state rng into the above state action to get back (B, RNG), which results in RNG -> (B, RNG) = Rand[B]
+  * */
   def flatMap[A, B](s: Rand[A])(f: A => Rand[B]): Rand[B] =
     rng =>
       val (a, rng2) = s(rng) // state operation to get the current state that we need to apply f to. this is just like map
