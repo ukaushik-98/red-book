@@ -77,6 +77,15 @@ object Chapter6 {
       val (a, rng2) = s(rng)
       (f(a), rng2)
 
+  /*
+  * Implementation of map in terms of flatmap.
+  * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
+  * The processig must follow the following:
+  * 1. apply state action first
+  * 2. apply function
+  * 3. return result of function and the new state.
+  *   - NOTE: THIS IS WHERE WE THREAD THE NEXT RNG
+  * */
   def mapF[A, B](s: Rand[A])(f: A => B): Rand[B] =
     flatMap(s)(a => unit(f(a)))
 
