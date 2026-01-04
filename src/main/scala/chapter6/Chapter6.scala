@@ -91,13 +91,13 @@ object Chapter6 {
 
   /*
   * Implementation of flatmap.
-  * The key to remember here is that map is supposed to return a state action, i.e. Rand[B]
+  * The key to remember here is that flatmap is supposed to return a state action, i.e. Rand[B]
   * The equivalent nonthreaded state is the following:
-  * def foo: Int
+  * def foo:
   *   val rng = SimpleRng(42)
   *   val (r1, rng2) = rng.nextInt
   *   val (r2, rng3) = rng2.nextInt
-  *   r1 + r2
+  *   (r1 + r2, rng3)
   *
   * The processing must follow the following:
   * 1. apply state action first
@@ -134,4 +134,16 @@ object Chapter6 {
     rs.foldRight(unit(List.empty)) { (action, accum) =>
       map2(action)(accum)(_ :: _)
     }
+
+  def sequence3[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rng => rs.foldRight((List.empty, rng))((action, accum) => {
+      val (result, rng2) = accum
+      val (a, rng3) = action(rng2)
+      (a :: result, rng3)
+    })
+
+  def sequence4[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit(List.empty))((action, accum) => {
+      map2(accum)(action)((a, b) => b :: a)
+    })
 }
