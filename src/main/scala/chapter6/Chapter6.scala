@@ -77,10 +77,13 @@ object Chapter6 {
       val (a, rng2) = s(rng)
       (f(a), rng2)
 
+  def mapF[A, B](s: Rand[A])(f: A => B): Rand[B] =
+    flatMap(s)(a => unit(f(a)))
+
   def flatMap[A, B](s: Rand[A])(f: A => Rand[B]): Rand[B] =
     rng =>
       val (a, rng2) = s(rng) // state operation to get the current state that we need to apply f to. this is just like map
-      f(a)(rng2)
+      f(a)(rng2) // passing rng2 at the end here is what actually applies the state action
 
   val nonNegativeEven: Rand[Int] = map(nonNegativeInt)(i => i - (i % 2))
 
@@ -89,6 +92,9 @@ object Chapter6 {
       val (a, rng2) = ra(rng)
       val (b, rng3) = rb(rng2)
       (f(a, b), rng3)
+
+  def map2f[A, B, C](ra: Rand[A])(rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    flatMap(ra)(a => map(rb)(b => f(a, b)))
 
   def both[A, B](ra: Rand[A])(rb: Rand[B]): Rand[(A, B)] =
     map2(ra)(rb)((_, _)) // same as map2(ra)(rb)((a, b) => (a, b))
