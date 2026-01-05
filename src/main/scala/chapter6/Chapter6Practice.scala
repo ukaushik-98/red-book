@@ -47,3 +47,14 @@ def ints(count: Int)(rng: RNG): (List[Int], RNG) =
       run(nextRng)(count - 1)(a :: accum)
 
   run(rng)(count)(List.empty)
+
+val int: Rand[Int] = rng => rng.nextInt
+
+def unit[A](a: A): Rand[A] = rng => (a, rng)
+
+def map[A, B](s: Rand[A])(f: A => B): Rand[B] = rng =>
+  val (a, nextRng) = s(rng)
+  (f(a), nextRng)
+
+val nonNegativeEven: Rand[Int] =
+  map(nonNegativeInt)(n => if n % 2 == 0 then n else n + 1)
