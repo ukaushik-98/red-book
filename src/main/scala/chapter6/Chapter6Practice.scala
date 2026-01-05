@@ -64,9 +64,26 @@ def map2[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] = rng =>
   val (b, rng3) = s2(rng2)
   (f(a, b), rng3)
 
+def map2F[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] =
+  flatMap(s1)(a => map(s2)(b => f(a, b)))
+
 def both[A, B](s1: Rand[A])(s2: Rand[B]): Rand[(A, B)] = map2(s1)(s2)((_, _))
 
 def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
   rs.foldRight(unit(List.empty)) { (action, accum) =>
-    map2(action)(accum)((a, b) => a :: b)
+    map2(action)(accum)(_ :: _)
   }
+
+def sequenceR[A](rs: List[Rand[A]]): Rand[List[A]] =
+  @tailrec
+  def run(rng: RNG, rs: List[Rand[A]], accum: List[A]): (List[A], RNG) =
+    rs match
+      case head :: tail =>
+        val (a, rng2) = head(rng)
+        run(rng2, tail, a :: accum)
+      case _ => (accum, rng)
+  rng => run(rng, rs, List.empty)
+
+def flatMap[A, B](s1: Rand[A])(f: A => Rand[B]): Rand[B] = rng =>
+  val (a, rng2) = s1(rng)
+  f(a)(rng2)
