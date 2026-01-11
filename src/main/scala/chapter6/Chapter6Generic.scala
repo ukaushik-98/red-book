@@ -38,13 +38,13 @@ extension [S, A](underlying: State[S, A])
 
   // Expanded code with substitution
   // only does 2 state transitions
-  def map2FExpanded[B, C](action2: State[S, B])(f: (A, B) => C): State[S, C] =
-    State[S, C] { s =>
-      val (a, s2) = underlying.run(s) // this simply passes the state forward into the next computation of f. it DOES NOT run the compulation
-      // a => action2.map(b => f(a, b)
-      a =>
-        State { sInner => // sInner = s2
-          val (b, s3) = action2.run(sInner) // this is s3
-          (f(a, b), s3) // computes f and then wires the newly computed state forward. NOTE: since this is map, it has a type has C and returns the next state
-        }
-    }
+//  def map2FExpanded[B, C](action2: State[S, B])(f: (A, B) => C): State[S, C] =
+//    State[S, C] { s =>
+//      val (a, s2) = underlying.run(s) // this simply passes the state forward into the next computation of f. it DOES NOT run the compulation
+//      // a => action2.map(b => f(a, b)
+//      a =>
+//        State { sInner => // sInner = s2
+//          val (b, s3) = action2.run(sInner) // this is s3
+//          (f(a, b), s3) // computes f and then wires the newly computed state forward. NOTE: since this is map, it has a type has C and returns the next state
+//        }
+//    }
