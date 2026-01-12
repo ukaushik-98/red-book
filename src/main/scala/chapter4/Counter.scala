@@ -1,3 +1,5 @@
+package chapter4
+
 case class Counter[+A, S](run: S => (A, S))
 
 object Counter:
