@@ -29,3 +29,13 @@ enum Option[+A]:
       case Some(a) => if f(a) then Some(a) else None
       case None    => None
     }
+
+def mean(xs: Seq[Double]): Option[Double] =
+  if xs.isEmpty then Option.None else Option.Some(xs.sum / xs.length)
+
+def variance(xs: Seq[Double]): Option[Double] =
+  mean(xs).flatMap(m => mean(xs.map(x => math.pow(x - m, 2))))
+//  mean(xs) match {
+//    case Option.Some(m) => xs.map(x => math.pow(x - m, 2))
+//    case Option.None    => Option.None
+//  }
