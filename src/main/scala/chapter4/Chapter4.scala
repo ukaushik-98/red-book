@@ -33,7 +33,7 @@ enum Option[+A]:
     }
 
   def orElseF[B >: A](ob: => Option[B]): Option[B] =
-    map(Some(_)).orElse(ob)
+    flatMap(Some(_)).orElse(ob)
 
   def filter(f: A => Boolean): Option[A] =
     this match {
@@ -52,3 +52,11 @@ def variance(xs: Seq[Double]): Option[Double] =
 
 object Option:
   def unit[A](a: A): Option[A] = Some(a)
+
+  def map2[A, B, C](oa: Option[A])(ob: Option[B])(f: (A, B) => C): Option[C] =
+    oa.flatMap(a => ob.map(b => f(a, b)))
+
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(unit(List.empty)) { (oa, accum) =>
+      accum.flatMap(acc => oa.map(a => a :: acc))
+    }
