@@ -52,26 +52,28 @@ val int: Rand[Int] = rng => rng.nextInt
 
 def unit[A](a: A): Rand[A] = rng => (a, rng)
 
-def map[A, B](s: Rand[A])(f: A => B): Rand[B] = rng =>
+def mapPractice[A, B](s: Rand[A])(f: A => B): Rand[B] = rng =>
   val (a, nextRng) = s(rng)
   (f(a), nextRng)
 
 val nonNegativeEven: Rand[Int] =
-  map(nonNegativeInt)(n => if n % 2 == 0 then n else n + 1)
+  mapPractice(nonNegativeInt)(n => if n % 2 == 0 then n else n + 1)
 
-def map2[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] = rng =>
-  val (a, rng2) = s1(rng)
-  val (b, rng3) = s2(rng2)
-  (f(a, b), rng3)
+def map2Practice[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] =
+  rng =>
+    val (a, rng2) = s1(rng)
+    val (b, rng3) = s2(rng2)
+    (f(a, b), rng3)
 
-def map2F[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] =
-  flatMap(s1)(a => map(s2)(b => f(a, b)))
+def map2FPractice[A, B, C](s1: Rand[A])(s2: Rand[B])(f: (A, B) => C): Rand[C] =
+  flatMapPractice(s1)(a => mapPractice(s2)(b => f(a, b)))
 
-def both[A, B](s1: Rand[A])(s2: Rand[B]): Rand[(A, B)] = map2(s1)(s2)((_, _))
+def both[A, B](s1: Rand[A])(s2: Rand[B]): Rand[(A, B)] =
+  map2Practice(s1)(s2)((_, _))
 
 def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
   rs.foldRight(unit(List.empty)) { (action, accum) =>
-    map2(action)(accum)(_ :: _)
+    map2Practice(action)(accum)(_ :: _)
   }
 
 def sequenceR[A](rs: List[Rand[A]]): Rand[List[A]] =
@@ -84,6 +86,6 @@ def sequenceR[A](rs: List[Rand[A]]): Rand[List[A]] =
       case _ => (accum, rng)
   rng => run(rng, rs, List.empty)
 
-def flatMap[A, B](s1: Rand[A])(f: A => Rand[B]): Rand[B] = rng =>
+def flatMapPractice[A, B](s1: Rand[A])(f: A => Rand[B]): Rand[B] = rng =>
   val (a, rng2) = s1(rng)
   f(a)(rng2)

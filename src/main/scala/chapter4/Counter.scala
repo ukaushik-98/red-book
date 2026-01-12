@@ -1,5 +1,3 @@
-package chapter4
-
 case class Counter[+A, S](run: S => (A, S))
 
 object Counter:
@@ -28,3 +26,7 @@ extension [S, A](underlying: Counter[A, S])
     val (a, s2) = underlying.run(s)
     f(a).run(s2)
   }
+
+val counter: Counter[Int, Int] = Counter.unit(0)
+val counter2 = counter.map(x => x + 1)
+val (a, s) = counter.flatMap(_ => counter2.map(a => a + 2)).run(0)
