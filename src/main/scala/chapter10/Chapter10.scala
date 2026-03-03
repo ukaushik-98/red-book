@@ -1,4 +1,4 @@
-package chapter11
+package chapter10
 
 trait Monoid[A]:
   def combine(a1: A, a2: A): A
