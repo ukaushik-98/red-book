@@ -14,7 +14,7 @@ extension [S, A](underlying: Counter[A, S])
   def mapF[B](f: A => B): Counter[B, S] =
     flatMap(a => Counter.unit(f(a)))
 
-  def map2[B, C](action: Counter[B, S])(f: (A, B) => C): Counter[C, S] =
+  def map2C[B, C](action: Counter[B, S])(f: (A, B) => C): Counter[C, S] =
     Counter { s =>
       val (a, s2) = underlying.run(s)
       val (b, s3) = action.run(s2)
